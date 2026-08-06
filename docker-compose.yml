@@ -1,0 +1,38 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: folio-db
+    environment:
+      - POSTGRES_USER=folio
+      - POSTGRES_PASSWORD=${FOLIO_DB_PASSWORD:-folio}
+      - POSTGRES_DB=folio
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U folio -d folio"]
+      interval: 3s
+      timeout: 3s
+      retries: 15
+    restart: unless-stopped
+
+  folio:
+    build: .
+    container_name: folio
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - folio-data:/data
+    environment:
+      - FOLIO_DATA_DIR=/data
+      - FOLIO_DATABASE_URL=postgresql+psycopg://folio:${FOLIO_DB_PASSWORD:-folio}@db:5432/folio
+      - FOLIO_MAX_UPLOAD_MB=200
+      - FOLIO_COOKIE_SECURE=${FOLIO_COOKIE_SECURE:-0}
+      - FOLIO_REGISTRATION_OPEN=${FOLIO_REGISTRATION_OPEN:-1}
+    restart: unless-stopped
+
+volumes:
+  pg-data:
+  folio-data:

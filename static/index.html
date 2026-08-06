@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Folio</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232a78d6'/%3E%3Cpath d='M9 8h10a4 4 0 0 1 4 4v12a3 3 0 0 0-3-3H9z' fill='%23fffdf9'/%3E%3Cpath d='M9 8v13h11a3 3 0 0 1 3 3V12a4 4 0 0 0-4-4z' fill='none' stroke='%23fffdf9' stroke-width='1.6'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body>
+
+<!-- ================================================== Auth ============== -->
+<div id="auth-view" hidden>
+  <div class="auth-card">
+    <div class="brand brand-center">
+      <svg viewBox="0 0 32 32" width="34" height="34" aria-hidden="true">
+        <rect width="32" height="32" rx="7" fill="#2a78d6"/>
+        <path d="M9 8h10a4 4 0 0 1 4 4v12a3 3 0 0 0-3-3H9z" fill="#fffdf9"/>
+      </svg>
+      <h1>Folio</h1>
+    </div>
+    <p class="auth-sub">Your personal reading room</p>
+    <form id="auth-form">
+      <input id="auth-email" type="email" placeholder="Email" required autocomplete="email">
+      <input id="auth-password" type="password" placeholder="Password" required minlength="8"
+        autocomplete="current-password">
+      <div id="auth-error" hidden></div>
+      <button id="auth-submit" class="primary-btn" type="submit">Sign in</button>
+    </form>
+    <button id="auth-toggle" type="button">New here? Create an account</button>
+  </div>
+</div>
+
+<!-- ================================================== Library =========== -->
+<main id="library-view">
+  <header class="lib-top">
+    <div class="brand">
+      <svg viewBox="0 0 32 32" width="28" height="28" aria-hidden="true">
+        <rect width="32" height="32" rx="7" fill="#2a78d6"/>
+        <path d="M9 8h10a4 4 0 0 1 4 4v12a3 3 0 0 0-3-3H9z" fill="#fffdf9"/>
+      </svg>
+      <h1>Folio</h1>
+    </div>
+    <div class="lib-controls">
+      <input id="lib-search" type="search" placeholder="Search library…" autocomplete="off">
+      <select id="lib-sort" title="Sort books">
+        <option value="recent">Recently read</option>
+        <option value="title">Title</option>
+        <option value="author">Author</option>
+        <option value="progress">Progress</option>
+      </select>
+      <button id="stats-btn" class="ghost-btn" title="Reading stats">
+        <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><path d="M3 17V9m5 8V4m5 13v-6m5 6V7" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg>
+        Stats
+      </button>
+      <button id="upload-btn" class="primary-btn">
+        <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><path d="M10 14V4m0 0L6 8m4-4l4 4M4 16h12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+        Add book
+      </button>
+      <input id="upload-input" type="file" accept=".epub,.pdf,.txt" multiple hidden>
+      <span id="user-chip" title="Signed in as"></span>
+      <button id="logout-btn" class="icon-btn" title="Sign out" aria-label="Sign out">
+        <svg viewBox="0 0 20 20" width="17" height="17"><path d="M8 4H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3m4-4l3-3-3-3m3 3H8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <section id="lib-empty" class="lib-empty" hidden>
+    <svg viewBox="0 0 64 64" width="72" height="72" aria-hidden="true">
+      <rect x="10" y="12" width="34" height="44" rx="4" fill="none" stroke="currentColor" stroke-width="2.5" opacity=".45"/>
+      <path d="M18 24h18M18 32h18M18 40h11" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" opacity=".45"/>
+      <circle cx="47" cy="45" r="12" fill="none" stroke="currentColor" stroke-width="2.5"/>
+      <path d="M47 40v10m-5-5h10" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+    </svg>
+    <h2>Your library is empty</h2>
+    <p>Drop an EPUB, PDF or TXT anywhere on this page, or</p>
+    <button id="empty-upload-btn" class="primary-btn">Add your first book</button>
+  </section>
+
+  <section id="book-grid" class="book-grid"></section>
+</main>
+
+<div id="drop-overlay" hidden>
+  <div class="drop-inner">Drop books to add them to your library</div>
+</div>
+
+<div id="stats-modal" class="modal-scrim" hidden>
+  <div class="modal" role="dialog" aria-label="Reading stats">
+    <div class="modal-head">
+      <h2>Reading stats</h2>
+      <button id="stats-close" class="icon-btn" aria-label="Close">✕</button>
+    </div>
+    <div id="stats-body"></div>
+  </div>
+</div>
+
+<!-- ================================================== Reader ============ -->
+<div id="reader-view" data-theme="light" hidden>
+  <header class="reader-top">
+    <button id="r-back" class="icon-btn" title="Back to library" aria-label="Back">
+      <svg viewBox="0 0 20 20" width="18" height="18"><path d="M12 4l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+    </button>
+    <div class="reader-heading">
+      <span id="r-title"></span>
+      <span id="r-chapter"></span>
+    </div>
+    <div class="reader-actions">
+      <span id="r-zoom" hidden>
+        <button id="r-zoom-out" class="icon-btn" title="Zoom out">−</button>
+        <button id="r-zoom-in" class="icon-btn" title="Zoom in">+</button>
+      </span>
+      <button id="r-search-btn" class="icon-btn" title="Search in book">
+        <svg viewBox="0 0 20 20" width="17" height="17"><circle cx="9" cy="9" r="5.5" stroke="currentColor" stroke-width="2" fill="none"/><path d="M13.5 13.5L17 17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <button id="r-toc" class="icon-btn" title="Contents & annotations">
+        <svg viewBox="0 0 20 20" width="17" height="17"><path d="M4 5h12M4 10h12M4 15h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <button id="r-bookmark" class="icon-btn" title="Add bookmark">
+        <svg viewBox="0 0 20 20" width="17" height="17"><path d="M6 3h8v14l-4-3-4 3z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" fill="none"/></svg>
+      </button>
+      <button id="r-settings" class="icon-btn" title="Display settings">
+        <span style="font-family:Georgia,serif;font-size:15px">Aa</span>
+      </button>
+    </div>
+  </header>
+
+  <div class="reader-body">
+    <aside id="r-sidebar">
+      <nav class="side-tabs">
+        <button class="tab-btn active" data-tab="toc">Contents</button>
+        <button class="tab-btn" data-tab="highlights">Highlights</button>
+        <button class="tab-btn" data-tab="bookmarks">Bookmarks</button>
+        <button class="tab-btn" data-tab="search">Search</button>
+      </nav>
+      <div class="side-panels">
+        <div id="tab-toc" class="side-panel"></div>
+        <div id="tab-highlights" class="side-panel" hidden></div>
+        <div id="tab-bookmarks" class="side-panel" hidden></div>
+        <div id="tab-search" class="side-panel" hidden>
+          <input id="r-search-input" type="search" placeholder="Search this book… (Enter)" autocomplete="off">
+          <div id="r-search-results"></div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="reader-stage-wrap">
+      <button id="r-prev" class="nav-arrow left" aria-label="Previous page">‹</button>
+      <div id="r-stage"></div>
+      <button id="r-next" class="nav-arrow right" aria-label="Next page">›</button>
+    </main>
+  </div>
+
+  <footer class="reader-bottom">
+    <input id="r-slider" type="range" min="0" max="1000" value="0" aria-label="Reading position">
+    <span id="r-pct"></span>
+  </footer>
+
+  <div id="r-scrim" hidden></div>
+
+  <aside id="r-drawer">
+    <h3>Display</h3>
+    <div class="set-row set-themes">
+      <button data-theme-opt="light" class="theme-chip chip-light">Light</button>
+      <button data-theme-opt="sepia" class="theme-chip chip-sepia">Sepia</button>
+      <button data-theme-opt="dark" class="theme-chip chip-dark">Dark</button>
+    </div>
+    <div class="set-row">
+      <label for="set-font">Font</label>
+      <select id="set-font">
+        <option value="serif">Serif</option>
+        <option value="sans">Sans-serif</option>
+        <option value="mono">Monospace</option>
+      </select>
+    </div>
+    <div class="set-row">
+      <label>Size</label>
+      <div class="stepper">
+        <button id="set-size-minus" class="icon-btn">−</button>
+        <span id="set-size-val">100%</span>
+        <button id="set-size-plus" class="icon-btn">+</button>
+      </div>
+    </div>
+    <div class="set-row">
+      <label for="set-lh">Line height <span id="set-lh-val">1.6</span></label>
+      <input id="set-lh" type="range" min="1.3" max="2.1" step="0.1">
+    </div>
+    <div class="set-row" id="set-flow-row">
+      <label>Layout</label>
+      <div class="radio-row">
+        <label><input type="radio" name="flow" value="paginated"> Pages</label>
+        <label><input type="radio" name="flow" value="scrolled"> Scroll</label>
+      </div>
+    </div>
+  </aside>
+
+  <!-- floating popups -->
+  <div id="dict-pop" class="floating" hidden>
+    <div id="dict-body"></div>
+  </div>
+
+  <div id="sel-menu" class="floating pill" hidden>
+    <button data-color="yellow" class="color-dot dot-yellow" title="Highlight yellow"></button>
+    <button data-color="green" class="color-dot dot-green" title="Highlight green"></button>
+    <button data-color="blue" class="color-dot dot-blue" title="Highlight blue"></button>
+    <button data-color="pink" class="color-dot dot-pink" title="Highlight pink"></button>
+    <span class="pill-sep"></span>
+    <button id="sel-note" class="pill-btn" title="Highlight with note">Note</button>
+    <button id="sel-copy" class="pill-btn" title="Copy">Copy</button>
+    <button id="sel-define" class="pill-btn" title="Define word">Define</button>
+  </div>
+
+  <div id="hl-menu" class="floating pill" hidden>
+    <button data-color="yellow" class="color-dot dot-yellow" title="Yellow"></button>
+    <button data-color="green" class="color-dot dot-green" title="Green"></button>
+    <button data-color="blue" class="color-dot dot-blue" title="Blue"></button>
+    <button data-color="pink" class="color-dot dot-pink" title="Pink"></button>
+    <span class="pill-sep"></span>
+    <button id="hl-note" class="pill-btn">Note</button>
+    <button id="hl-copy" class="pill-btn">Copy</button>
+    <button id="hl-delete" class="pill-btn danger">Delete</button>
+  </div>
+
+  <div id="note-pop" class="floating" hidden>
+    <textarea id="note-text" rows="4" placeholder="Write a note…"></textarea>
+    <div class="note-actions">
+      <button id="note-cancel" class="ghost-btn">Cancel</button>
+      <button id="note-save" class="primary-btn">Save note</button>
+    </div>
+  </div>
+</div>
+
+<div id="toasts"></div>
+
+<script src="/static/vendor/jszip.min.js"></script>
+<script src="/static/vendor/epub.min.js"></script>
+<script type="module" src="/static/js/app.js"></script>
+</body>
+</html>

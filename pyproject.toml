@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "folio"
+version = "1.0.0"
+description = "Folio — self-hosted personal book reader with dictionary lookup, highlights and reading progress"
+authors = ["Yashraj Basav <yashrajbasav@nvidia.com>"]
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.10"
+fastapi = "^0.115.0"
+uvicorn = { extras = ["standard"], version = "^0.30.0" }
+sqlalchemy = "^2.0.30"
+python-multipart = "^0.0.9"
+httpx = "^0.27.0"
+pymupdf = "^1.24.9"
+argon2-cffi = "^25.1.0"
+psycopg = {extras = ["binary"], version = "^3.3.4"}
+email-validator = "^2.3.0"
+
+[build-system]
+requires = ["poetry-core>=1.8.0"]
+build-backend = "poetry.core.masonry.api"

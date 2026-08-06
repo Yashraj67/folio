@@ -1,0 +1,28 @@
+# Production overlay: adds a Caddy reverse proxy with automatic HTTPS.
+# Usage: docker compose -f docker-compose.yml -f docker-compose.prod.yml up --build -d
+# Requires FOLIO_DOMAIN (and friends) in .env — see .env.example.
+services:
+  caddy:
+    image: caddy:2-alpine
+    container_name: folio-caddy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    environment:
+      - FOLIO_DOMAIN=${FOLIO_DOMAIN:?set FOLIO_DOMAIN in .env}
+    depends_on:
+      - folio
+    restart: unless-stopped
+
+  folio:
+    # Only Caddy needs to reach the app; keep 8000 off the public interface.
+    ports: !override
+      - "127.0.0.1:8000:8000"
+
+volumes:
+  caddy-data:
+  caddy-config:
