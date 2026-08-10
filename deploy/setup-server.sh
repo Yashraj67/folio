@@ -6,6 +6,16 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
+echo "==> Ensuring swap exists (small shapes like E2.1.Micro need it)"
+if [ "$(free -m | awk '/Mem:/{print $2}')" -lt 3000 ] && ! swapon --show | grep -q .; then
+  sudo fallocate -l 3G /swapfile
+  sudo chmod 600 /swapfile
+  sudo mkswap /swapfile
+  sudo swapon /swapfile
+  echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab >/dev/null
+  echo "    added 3G swapfile"
+fi
+
 echo "==> Installing Docker (if missing)"
 if ! command -v docker >/dev/null 2>&1; then
   curl -fsSL https://get.docker.com | sudo sh
